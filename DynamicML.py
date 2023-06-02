@@ -8,6 +8,7 @@ from sklearn.neighbors import KNeighborsClassifier
 from sklearn.naive_bayes import GaussianNB
 from sklearn.neural_network import MLPClassifier
 from sklearn.metrics import accuracy_score
+from sklearn.preprocessing import LabelEncoder
 
 # Load and preprocess the dataset
 def load_dataset(file_path):
@@ -15,12 +16,25 @@ def load_dataset(file_path):
     dataset = pd.read_csv(file_path)
     # Apply data preprocessing techniques (e.g., cleaning, feature engineering, normalization)
     # Your code for data preprocessing goes here
-    return dataset
+    
+    # Prompt user to specify the target column
+    target_column = input("Enter the name of the target column: ")
+    if target_column not in dataset.columns:
+        raise ValueError(f"Target column '{target_column}' not found in the dataset.")
+    
+    # Convert categorical columns to numerical using LabelEncoder
+    le = LabelEncoder()
+    for column in dataset.columns:
+        if dataset[column].dtype == 'object' and column != target_column:
+            dataset[column] = le.fit_transform(dataset[column])
+    
+    X = dataset.drop(columns=[target_column])
+    y = dataset[target_column]
+    
+    return X, y
 
 # Split the dataset into training and testing sets
-def split_dataset(dataset, test_size=0.2):
-    X = dataset.drop(columns=['target'])
-    y = dataset['target']
+def split_dataset(X, y, test_size=0.2):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=test_size)
     return X_train, X_test, y_train, y_test
 
@@ -56,8 +70,8 @@ def train_model(X_train, y_train):
 
 # Example usage
 dataset_name = input("Enter the dataset name: ")
-dataset = load_dataset(dataset_name)
-X_train, X_test, y_train, y_test = split_dataset(dataset)
+X, y = load_dataset(dataset_name)
+X_train, X_test, y_train, y_test = split_dataset(X, y)
 
 best_algorithm = train_model(X_train, y_train)
 print(f"Best algorithm: {best_algorithm}")
